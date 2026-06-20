@@ -19,7 +19,7 @@ public:
     void dijkstra(int startNode, int endNode) {
         priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
         vector<int> distances(numVertices, 1e9); 
-        vector<int> parent(numVertices, -1); // Array to track the path
+        vector<int> parent(numVertices, -1); 
 
         pq.push(make_pair(0, startNode));
         distances[startNode] = 0;
@@ -28,7 +28,6 @@ public:
             int u = pq.top().second;
             pq.pop();
 
-            // Optimization: Stop if we reached the destination
             if (u == endNode) break; 
 
             for (auto& neighbor : adjList[u]) {
@@ -37,7 +36,7 @@ public:
 
                 if (distances[u] + weight < distances[v]) {
                     distances[v] = distances[u] + weight;
-                    parent[v] = u; // Record how we got to this node
+                    parent[v] = u; 
                     pq.push(make_pair(distances[v], v));
                 }
             }
@@ -52,7 +51,6 @@ public:
         cout << "Total Distance: " << distances[endNode] << "\n";
         cout << "Optimal Path: ";
         
-        // Backtrack from endNode to startNode to build the path
         vector<int> path;
         for (int curr = endNode; curr != -1; curr = parent[curr]) {
             path.push_back(curr);
@@ -62,34 +60,52 @@ public:
         for (size_t i = 0; i < path.size(); i++) {
             cout << path[i] << (i == path.size() - 1 ? "" : " -> ");
         }
-        cout << "\n";
+        cout << "\n\n";
     }
 };
 
 int main() {
-    int nodes, edges;
-    cout << "Welcome to the Interactive Route Finder!\n";
-    cout << "Enter total number of locations (nodes): ";
-    cin >> nodes;
+    cout << "Initializing Routing Engine...\n";
     
-    Graph cityMap(nodes);
+    // We initialize the graph with 8 nodes (0 through 7) based on our CSV data
+    Graph cityMap(8);
     
-    cout << "Enter total number of roads (edges): ";
-    cin >> edges;
+    // --- FILE PARSING LOGIC ---
+    ifstream mapFile("city_map.csv");
+    string line;
     
-    cout << "Define each road (Start Node, End Node, Distance/Weight).\n";
-    cout << "Example input format: '0 1 5'\n";
-    for (int i = 0; i < edges; i++) {
-        int u, v, w;
-        cout << "Road " << i + 1 << ": ";
-        cin >> u >> v >> w;
-        cityMap.addEdge(u, v, w);
+    if (!mapFile.is_open()) {
+        cout << "Error: Could not open city_map.csv. Make sure it is in the same folder!\n";
+        return 1;
     }
+
+    // Read and ignore the first header line ("StartNode,EndNode,Distance")
+    getline(mapFile, line); 
+
+    int roadCount = 0;
+    // Read the file line by line
+    while (getline(mapFile, line)) {
+        stringstream ss(line);
+        string u_str, v_str, w_str;
+        
+        // Split the line by commas
+        getline(ss, u_str, ',');
+        getline(ss, v_str, ',');
+        getline(ss, w_str, ',');
+        
+        // Convert strings to integers and add the edge
+        cityMap.addEdge(stoi(u_str), stoi(v_str), stoi(w_str));
+        roadCount++;
+    }
+    mapFile.close();
     
+    cout << "Successfully loaded " << roadCount << " roads from database.\n";
+    // --------------------------
+
     int start, end;
-    cout << "\nEnter your starting location: ";
+    cout << "\nEnter your starting node (0-7): ";
     cin >> start;
-    cout << "Enter your destination: ";
+    cout << "Enter your destination node (0-7): ";
     cin >> end;
     
     cityMap.dijkstra(start, end);
